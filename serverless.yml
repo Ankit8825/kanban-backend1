@@ -1,0 +1,71 @@
+# # "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: ankit8825
+
+service: todo-app
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+  stage: dev
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:Scan
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:ap-south-1:${aws:accountId}:table/Todos
+
+plugins:
+  - serverless-iam-roles-per-function
+
+# package:
+#   patterns:
+#     - '!node_modules/** '
+
+functions:
+  createTask:
+    handler: handler.createTask
+    events:
+      - http:
+          path: task
+          method: post
+          cors: true
+  getTasks:
+    handler: handler.getTasks
+    events:
+      - http:
+          path: tasks
+          method: get
+          cors: true
+  deleteTask:
+    handler: handler.deleteTask
+    events:
+      - http:
+          path: task/{id}
+          method: delete
+          cors: true
+  updateTask:
+    handler: handler.updateTask
+    events:
+      - http:
+          path: task/{id}
+          method: put
+          cors: true
+
+resources:
+  Resources:
+    TodosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Todos
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
